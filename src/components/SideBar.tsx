@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { api } from "../services/api";
 import { Button } from "./Button";
 
 interface Genres {
@@ -9,23 +10,39 @@ interface Genres {
 
 interface SideBarProps {
   selectedGenreId: number;
-  selectGenre: (genreId: number) => void
+  onSelectGenre: (genreId: number) => void
+  setSelectedGenre: (genre: Genres) => void
 }
 
-export function SideBar({ selectGenre, selectedGenreId }: SideBarProps) {
+export function SideBar({ onSelectGenre, selectedGenreId,setSelectedGenre }: SideBarProps) {
   const [genres, setGenres] = useState<Genres[]>([])
+
+  useEffect(() => {
+    api.get<Genres[]>('genres').then(response => {
+      setGenres(response.data);
+    });
+  }, []);
+
+  useEffect(() => {
+    api.get<Genres>(`genres/${selectedGenreId}`).then(response => {
+      onSelectGenre(response.data.id)
+      setSelectedGenre(response.data)
+    })
+  }, [selectedGenreId])
+
+  console.log(genres)
 
   return (
     <nav className="sidebar">
       <span>Watch<p>Me</p></span>
 
       <div className="buttons-container">
-        {genres.map(genre => (
+        {genres?.map(genre => (
           <Button
             key={String(genre.id)}
             title={genre.title}
             iconName={genre.name}
-            onClick={() => selectGenre(genre.id)}
+            onClick={() => onSelectGenre(genre.id)}
             selected={selectedGenreId === genre.id}
           />
         ))}
